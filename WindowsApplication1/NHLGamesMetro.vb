@@ -460,6 +460,10 @@ Public Class NHLGamesMetro
         SetEventArgsFromForm()
     End Sub
 
+    Private Sub txtMPVPath_TextChanged(sender As Object, e As EventArgs) Handles txtMpvPath.TextChanged
+        SetEventArgsFromForm()
+    End Sub
+
     Private Sub txtLiveStreamPath_TextChanged(sender As Object, e As EventArgs) Handles txtLiveStreamPath.TextChanged
         SetEventArgsFromForm()
     End Sub
