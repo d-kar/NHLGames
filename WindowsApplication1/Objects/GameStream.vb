@@ -10,6 +10,7 @@ Public Class GameStream
     Public PlayBackID As String = ""
     Public Type As StreamType
     Public Game As Game
+    Public Proc As Process
 
     Public Enum StreamType
         Away

@@ -1,6 +1,7 @@
 ﻿Imports System.Globalization
 Imports System.Text
 Imports System.IO
+Imports System.Management
 Imports Newtonsoft.Json.Linq
 
 <DebuggerDisplay("{HomeTeam} vs. {AwayTeam} at {[Date]}")>
@@ -137,23 +138,57 @@ Public Class Game
 
     End Sub
 
-    Public Sub Watch(args As GameWatchArguments)
+    Private Declare Function ShowWindow Lib "user32" (ByVal handle As IntPtr, ByVal nCmdShow As Integer) As Integer
 
+    Public Sub Watch(Stream As GameStream, args As GameWatchArguments)
+        If Stream.Proc IsNot Nothing Then
+            Try
+                'Try to bring it to front first
+                Dim selectQuery As SelectQuery = New SelectQuery("Win32_Process", "ParentProcessID=" & Stream.Proc.Id)
+                Dim searcher As New ManagementObjectSearcher(selectQuery)
+                Dim activated As Boolean = False
+
+                For Each proc As ManagementObject In searcher.Get
+                    If (proc("ExecutablePath") = args.PlayerPath) Then
+
+                        Try
+                            Dim childId As Integer = proc("ProcessId")
+                            AppActivate(childId)
+                            ShowWindow(Process.GetProcessById(childId).MainWindowHandle, 9)
+                            activated = True
+
+                        Catch ex As Exception
+                            Console.WriteLine("warning: " & ex.Message)
+                        End Try
+                    End If
+                Next
+
+                If activated Then
+                    Return
+                Else
+                    Stream.Proc.Kill()
+                    Stream.Proc = Nothing
+                End If
+            Catch ex As Exception
+                Console.WriteLine("warning: " & ex.Message)
+            End Try
+        End If
         Dim t As Task = New Task(Function()
-                                     Console.WriteLine("Starting: " & args.LiveStreamerPath & " " & args.ToString(True))
+                                     Console.WriteLine("Starting:   " & args.LiveStreamerPath & " " & args.OutputArgs(Stream, True))
 
                                      Dim proc = New Process() With {.StartInfo =
             New ProcessStartInfo With {
             .FileName = args.LiveStreamerPath,
-            .Arguments = args.ToString(),
+            .Arguments = args.OutputArgs(Stream, False),
             .UseShellExecute = False,
             .RedirectStandardOutput = True,
             .CreateNoWindow = True}
         }
                                      proc.EnableRaisingEvents = True
                                      Try
-                                         proc.Start()
 
+                                         Stream.Proc = proc
+                                         proc.Start()
                                          'Remove stream URL from console output
                                          While (proc.StandardOutput.EndOfStream = False)
                                              Dim line = proc.StandardOutput.ReadLine()
@@ -165,6 +200,8 @@ Public Class Game
                                      Catch ex As Exception
                                          Console.WriteLine("Error: " & ex.Message)
                                      End Try
+
+                                     Stream.Proc = Nothing
                                      Return ""
                                  End Function)
         t.Start()
@@ -174,7 +211,6 @@ Public Class Game
         'If (proc.ExitCode <> 0) Then
         '    Dim errjor = "fg"
         'End If
-
     End Sub
 
     Public ReadOnly Property AreAnyStreamsAvailable As Boolean
@@ -276,7 +312,6 @@ Public Class Game
         Public Property Is60FPS As Boolean = True
         Public Property CDN As String = ""
         Public Property Server As String = ""
-        Public Property Stream As GameStream
         Public Property IsVOD As Boolean = False
         Public Property IsMPC As Boolean = False
 
@@ -296,15 +331,7 @@ Public Class Game
         Public Property UseOutputArgs As Boolean = False
         Public Property PlayerOutputPath As String = ""
 
-        Public Overrides Function ToString() As String
-            Return OutputArgs(False)
-        End Function
-
-        Public Overloads Function ToString(ByVal SafeOutput As Boolean)
-            Return OutputArgs(SafeOutput)
-        End Function
-
-        Private Function OutputArgs(ByVal SafeOutput As Boolean)
+        Public Function OutputArgs(ByRef Stream As GameStream, ByVal SafeOutput As Boolean)
             '--player-passthrough hls  should allow for seeking, never seems to work
             '--player-external-http should allow for serviio to serve stream to DLNA player, my TV can't seem to open the media though. DLNA player on phone sort of works, craps out after 10 sec or so
 
@@ -319,8 +346,11 @@ Public Class Game
                 titleArg = " --meta-title '" & GameTitle & "' "
             ElseIf PlayerType = PlayerTypeEnum.mpv Then
                 titleArg = " --title '" & GameTitle & "' --user-agent='User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, Like Gecko) Chrome/48.0.2564.82 Safari/537.36 Edge/14.14316'"
+            ElseIf PlayerType = PlayerTypeEnum.MPC Then
+                If Not LiteralPlayerArgs.Contains("/new") Then
+                    LiteralPlayerArgs &= " /new "
+                End If
             End If
-
             If String.IsNullOrEmpty(PlayerPath) = False Then
                 returnValue &= " --player ""'" & PlayerPath & "' " & titleArg & LiteralPlayerArgs & """ " '--player-passthrough=hls 
             Else
@@ -379,7 +409,7 @@ Public Class Game
                     outputPath = Path.ChangeExtension(Path.Combine(Path.GetDirectoryName(outputPath), originalName & "_" & suffix), originalExt)
                     suffix += 1
                 End While
-
+                PlayerOutputPath = outputPath
                 returnValue &= " -o """ & outputPath & """ "
             End If
 
