@@ -24,7 +24,9 @@ Partial Class GameControl
     Private Sub InitializeComponent()
         Me.HomeTeamToolTip = New MetroFramework.Components.MetroToolTip()
         Me.AwayTeamToolTip = New MetroFramework.Components.MetroToolTip()
-        Me.BorderPanel1 = New BorderPanel()
+        Me.BorderPanel1 = New NHLGames.BorderPanel()
+        Me.lblPVRHome = New System.Windows.Forms.LinkLabel()
+        Me.lblPVRAway = New System.Windows.Forms.LinkLabel()
         Me.FlowLayoutPanel1 = New System.Windows.Forms.FlowLayoutPanel()
         Me.lblHomeStream = New System.Windows.Forms.LinkLabel()
         Me.lblAwayStream = New System.Windows.Forms.LinkLabel()
@@ -59,6 +61,8 @@ Partial Class GameControl
         'BorderPanel1
         '
         Me.BorderPanel1.BorderColour = System.Drawing.Color.LightGray
+        Me.BorderPanel1.Controls.Add(Me.lblPVRHome)
+        Me.BorderPanel1.Controls.Add(Me.lblPVRAway)
         Me.BorderPanel1.Controls.Add(Me.FlowLayoutPanel1)
         Me.BorderPanel1.Controls.Add(Me.picAway)
         Me.BorderPanel1.Controls.Add(Me.lblTime)
@@ -72,6 +76,46 @@ Partial Class GameControl
         Me.BorderPanel1.Name = "BorderPanel1"
         Me.BorderPanel1.Size = New System.Drawing.Size(313, 95)
         Me.BorderPanel1.TabIndex = 9
+        '
+        'lblPVRHome
+        '
+        Me.lblPVRHome.ActiveLinkColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
+        Me.lblPVRHome.Anchor = System.Windows.Forms.AnchorStyles.None
+        Me.lblPVRHome.BackColor = System.Drawing.Color.FromArgb(CType(CType(227, Byte), Integer), CType(CType(227, Byte), Integer), CType(CType(227, Byte), Integer))
+        Me.lblPVRHome.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.lblPVRHome.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblPVRHome.ForeColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
+        Me.lblPVRHome.LinkBehavior = System.Windows.Forms.LinkBehavior.HoverUnderline
+        Me.lblPVRHome.LinkColor = System.Drawing.Color.Red
+        Me.lblPVRHome.Location = New System.Drawing.Point(204, 70)
+        Me.lblPVRHome.Name = "lblPVRHome"
+        Me.lblPVRHome.Size = New System.Drawing.Size(55, 19)
+        Me.lblPVRHome.TabIndex = 14
+        Me.lblPVRHome.TabStop = True
+        Me.lblPVRHome.Text = "PVR"
+        Me.lblPVRHome.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.lblPVRHome.Visible = False
+        Me.lblPVRHome.VisitedLinkColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
+        '
+        'lblPVRAway
+        '
+        Me.lblPVRAway.ActiveLinkColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
+        Me.lblPVRAway.Anchor = System.Windows.Forms.AnchorStyles.None
+        Me.lblPVRAway.BackColor = System.Drawing.Color.FromArgb(CType(CType(227, Byte), Integer), CType(CType(227, Byte), Integer), CType(CType(227, Byte), Integer))
+        Me.lblPVRAway.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.lblPVRAway.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblPVRAway.ForeColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
+        Me.lblPVRAway.LinkBehavior = System.Windows.Forms.LinkBehavior.HoverUnderline
+        Me.lblPVRAway.LinkColor = System.Drawing.Color.Red
+        Me.lblPVRAway.Location = New System.Drawing.Point(48, 70)
+        Me.lblPVRAway.Name = "lblPVRAway"
+        Me.lblPVRAway.Size = New System.Drawing.Size(55, 19)
+        Me.lblPVRAway.TabIndex = 13
+        Me.lblPVRAway.TabStop = True
+        Me.lblPVRAway.Text = "PVR"
+        Me.lblPVRAway.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.lblPVRAway.Visible = False
+        Me.lblPVRAway.VisitedLinkColor = System.Drawing.Color.FromArgb(CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer), CType(CType(64, Byte), Integer))
         '
         'FlowLayoutPanel1
         '
@@ -274,4 +318,6 @@ Partial Class GameControl
     Friend WithEvents lblFrenchStream As LinkLabel
     Friend WithEvents lblNationalStream As LinkLabel
     Friend WithEvents lblHomeStream As LinkLabel
+    Friend WithEvents lblPVRHome As LinkLabel
+    Friend WithEvents lblPVRAway As LinkLabel
 End Class

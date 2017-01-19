@@ -18,6 +18,7 @@ Public Class NHLGamesMetro
     Public Shared FormInstance As NHLGamesMetro = Nothing
     Private AdDetectorViewModel As AdDetectorViewModel = Nothing
     Private StatusTimer As Timer
+    Private PVR As New Dictionary(Of String, Tuple(Of Boolean, Boolean)) 'id -> (home, away)'
 
     ' Starts the application. -- See: https://msdn.microsoft.com/en-us/library/system.windows.forms.application.threadexception(v=vs.110).aspx
     <SecurityPermission(SecurityAction.Demand, Flags:=SecurityPermissionFlag.ControlAppDomain)>
@@ -270,7 +271,7 @@ Public Class NHLGamesMetro
         If InvokeRequired Then
             BeginInvoke(New Action(Of Game)(AddressOf NewGameFoundHandler), gameObj)
         Else
-            Dim gameControl As New GameControl(gameObj, ApplicationSettings.Read(Of Boolean)(ApplicationSettings.Settings.ShowScores, True), dtDate.Value)
+            Dim gameControl As New GameControl(gameObj, ApplicationSettings.Read(Of Boolean)(ApplicationSettings.Settings.ShowScores, True), dtDate.Value, PVR)
             FlowLayoutPanel.Controls.Add(gameControl)
         End If
 
