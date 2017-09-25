@@ -9,7 +9,7 @@ namespace NHLGames.AdDetection
     [DataContract]
     public class AdDetectionSettings
     {
-        private static readonly string m_fileName = @"./AdDetectionSettings.xml";
+        private const string FileName = @"./AdDetectionSettings.xml";
 
         private static AdDetectionSettings _settings;
 
@@ -41,10 +41,10 @@ namespace NHLGames.AdDetection
 
             try
             {
-                if (File.Exists(m_fileName))
+                if (File.Exists(FileName))
                 {
                     var s = new DataContractSerializer(typeof (AdDetectionSettings));
-                    using (var fs = File.Open(m_fileName, FileMode.Open))
+                    using (var fs = File.Open(FileName, FileMode.Open))
                     {
                         using (var reader = XmlReader.Create(fs))
                         {
@@ -56,7 +56,7 @@ namespace NHLGames.AdDetection
             }
             catch
             {
-                Console.WriteLine($"Unable to load {m_fileName}. Using default config.");
+                Console.WriteLine($@"Unable to load {FileName}. Using default config.");
             }
 
             Save(Default);
@@ -68,7 +68,7 @@ namespace NHLGames.AdDetection
             try
             {
                 var s = new DataContractSerializer(typeof (AdDetectionSettings));
-                using (var fs = File.Open(m_fileName, FileMode.Create))
+                using (var fs = File.Open(FileName, FileMode.Create))
                 {
                     s.WriteObject(fs, settings);
                     _settings = settings;
@@ -76,7 +76,7 @@ namespace NHLGames.AdDetection
             }
             catch
             {
-                Console.WriteLine($"Unable to save {m_fileName}");
+                Console.WriteLine($@"Unable to save {FileName}");
             }
         }
     }

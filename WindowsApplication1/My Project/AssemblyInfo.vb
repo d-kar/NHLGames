@@ -1,4 +1,4 @@
-﻿Imports System
+﻿Imports System.Resources
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 
@@ -9,11 +9,11 @@ Imports System.Runtime.InteropServices
 ' Review the values of the assembly attributes
 
 <Assembly: AssemblyTitle("NHLGames")>
-<Assembly: AssemblyDescription("")>
-<Assembly: AssemblyCompany("")>
-<Assembly: AssemblyProduct("")>
-<Assembly: AssemblyCopyright("")>
-<Assembly: AssemblyTrademark("")> 
+<Assembly: AssemblyDescription("NHLGames")>
+<Assembly: AssemblyCompany("NHLGames")>
+<Assembly: AssemblyProduct("NHLGames")>
+<Assembly: AssemblyCopyright("NHLGames")>
+<Assembly: AssemblyTrademark("NHLGames")> 
 
 <Assembly: ComVisible(False)>
 
@@ -31,5 +31,6 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("1.0.0.0")> 
-<Assembly: AssemblyFileVersion("1.0.0.0")> 
+<Assembly: AssemblyVersion("1.0.8.0")> 
+<Assembly: AssemblyFileVersion("1.0.8.6")>
+<Assembly: NeutralResourcesLanguage("en-CA")>

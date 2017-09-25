@@ -1,142 +1,156 @@
 ﻿Imports System.IO
 Imports System.Net
 Imports System.Security.Principal
-Imports MetroFramework
+Imports NHLGames.My.Resources
 
-Public Class HostsFile
+Namespace Utilities
 
-    Public Shared Function TestEntry(domain As String, ip As String) As Boolean
-        Dim resolvedIP As String = Dns.GetHostAddresses(domain)(0).ToString()
-        Return ip = resolvedIP
-    End Function
+    Public Class HostsFile
 
-    Private Shared Function RemoveOldEntries(ip As String, host As String, contents As String) As String
+        Public Shared ReadOnly Property HostsFilePath As String = String.Format("{0}\drivers\etc\hosts", Environment.SystemDirectory)
 
-        Dim entry As String = ip & " " & host
+        Public Shared Function TestEntry(domain As String, ip As String) As Boolean
+            Dim resolvedIp As String = ""
+            Try
+                resolvedIp = Dns.GetHostAddresses(domain)(0).ToString()
+            Catch ex As Exception
+            End Try
+            Return ip = resolvedIp
+        End Function
 
-        If contents.IndexOf(ip) > -1 Then
-            Console.WriteLine("Removing existing entries from hosts file")
-            Return contents.Replace(ip, String.Empty)
-        Else
-            Return contents
-        End If
+        Private Shared Function RemoveOldEntries(host As String, contents As String) As String
+            Dim newContents As String = String.Empty
 
-    End Function
+            Console.WriteLine(English.msgCleanHostsFile)
 
-    Private Shared Sub Backup(path As String)
-        Console.WriteLine("Backing up file: " & path)
-        File.Copy(path, path & ".bak", True)
-    End Sub
+            Dim hostsFile = contents.Replace(vbCr, String.Empty).Split(vbLf)
 
-    Public Shared Sub CleanHosts(ip As String, host As String, checkAdmin As Boolean)
-        If checkAdmin = False OrElse EnsureAdmin() Then
+            For lineCount As Integer = 0 To hostsFile.Length - 1
+                If hostsFile(lineCount).Contains(host) = False Then
+                    newContents &= hostsFile(lineCount).Replace(vbLf, String.Empty)
+                    If lineCount < hostsFile.Length - 1 Then
+                        newContents &= vbCrLf
+                    End If
+                End If
+            Next
 
-            Dim HostsFilePath As String = Environment.SystemDirectory & "\drivers\etc\hosts"
+            newContents = newContents.TrimEnd()
 
-            Dim fileIsReadonly As Boolean = FileAccess.IsFileReadonly(HostsFilePath)
+            Return newContents
+        End Function
 
-            If fileIsReadonly Then
-                FileAccess.RemoveReadOnly(HostsFilePath)
+        Public Shared Sub CleanHosts(host As String)
+
+            If FileAccess.HasAccess(HostsFilePath, false, true) Then
+                Dim fileIsReadonly As Boolean = FileAccess.IsFileReadonly(HostsFilePath)
+
+                If fileIsReadonly Then
+                    FileAccess.RemoveReadOnly(HostsFilePath)
+                End If
+
+                Console.WriteLine(English.msgBackingHostsFile, HostsFilePath)
+                File.Copy(HostsFilePath, HostsFilePath & ".bak", True)
+
+                Dim input As String
+                Using sr As New StreamReader(HostsFilePath)
+                    input = sr.ReadToEnd()
+                End Using
+
+                Dim output As String = RemoveOldEntries(host, input)
+
+                Using sw As New StreamWriter(HostsFilePath)
+                    sw.Write(output)
+                    sw.Close()
+                End Using
+
+                If fileIsReadonly Then
+                    FileAccess.AddReadonly(HostsFilePath)
+                End If
+
+                MessageOpenHostsFile()
             End If
 
-            Backup(HostsFilePath)
+        End Sub
 
-            Dim input As String = ""
-            Using sr As New StreamReader(HostsFilePath)
-                input = sr.ReadToEnd()
-            End Using
+        Private Shared Sub MessageOpenHostsFile()
+            If InvokeElement.MsgBoxBlue(
+                NHLGamesMetro.RmText.GetString("msgViewHostsText"),
+                NHLGamesMetro.RmText.GetString("msgViewHosts"),
+                MessageBoxButtons.YesNo) = DialogResult.Yes AndAlso FileAccess.HasAccess(HostsFilePath, false, true) Then
+                Process.Start("NOTEPAD", HostsFilePath)
+            End If
+        End Sub
 
-            Dim output As String = RemoveOldEntries(ip, host, input)
+        Public Shared Sub AddEntry(ip As String, host As String)
 
-            Using sw As New StreamWriter(HostsFilePath)
-                sw.Write(output)
-                sw.Close()
-            End Using
+            If EnsureAdmin() Then
+                Dim fileIsReadonly As Boolean = FileAccess.IsFileReadonly(HostsFilePath)
 
-            If fileIsReadonly Then
-                FileAccess.AddReadonly(HostsFilePath)
+                If fileIsReadonly Then
+                    FileAccess.RemoveReadOnly(HostsFilePath)
+                End If
+
+                Console.WriteLine(English.msgBackingHostsFile, HostsFilePath)
+                File.Copy(HostsFilePath, HostsFilePath & ".bak", True)
+
+                Dim input As String
+                Using sr As New StreamReader(HostsFilePath)
+                    input = sr.ReadToEnd()
+                End Using
+
+                Dim output As String = RemoveOldEntries(host, input)
+
+                output = output & vbNewLine & ip & vbTab & host
+
+                Using sw As New StreamWriter(HostsFilePath)
+                    sw.Write(output)
+                    sw.Close()
+                End Using
+
+                If fileIsReadonly Then
+                    FileAccess.AddReadonly(HostsFilePath)
+                End If
+
+                MessageOpenHostsFile()
             End If
 
+        End Sub
 
-            If MetroMessageBox.Show(NHLGamesMetro.FormInstance, "Do you wish to view the Hosts file confim the changes?", "Open Hosts File", MessageBoxButtons.YesNo) = DialogResult.Yes Then
-                Process.Start(HostsFilePath)
+        Public Shared Function EnsureAdmin() As Boolean
+
+            If FileAccess.HasAccess(HostsFilePath, false, true) Then
+                If IsAdministrator() Then
+                    If InvokeElement.MsgBoxBlue(
+                        NHLGamesMetro.RmText.GetString("msgRunAsAdminText"), 
+                        NHLGamesMetro.RmText.GetString("msgRunAsAdmin"),
+                        MessageBoxButtons.YesNo) = DialogResult.Yes Then
+
+                        ' Restart program And run as admin
+                        Dim exeName = Process.GetCurrentProcess().MainModule.FileName
+                        Dim startInfo As ProcessStartInfo = New ProcessStartInfo(exeName)
+                        startInfo.Verb = "runas"
+                        startInfo.UseShellExecute = True
+                        Try
+                            Process.Start(startInfo)
+                            Application.Exit()
+                        Catch ex As Exception
+                        End Try
+
+                    End If
+                    Return False
+                End If
+                Return True
+            Else 
+                Return False
             End If
 
-        End If
-    End Sub
+        End Function
 
-    Public Shared Sub AddEntry(ip As String, host As String, checkAdmin As Boolean)
+        Public Shared Function IsAdministrator() As Boolean
+            Dim identity As WindowsIdentity = WindowsIdentity.GetCurrent()
+            Dim principal As WindowsPrincipal = New WindowsPrincipal(identity)
+            Return Not principal.IsInRole(WindowsBuiltInRole.Administrator)
+        End Function
 
-        If checkAdmin = False OrElse EnsureAdmin() Then
-
-            Dim HostsFilePath As String = Environment.SystemDirectory & "\drivers\etc\hosts"
-
-            Dim fileIsReadonly As Boolean = FileAccess.IsFileReadonly(HostsFilePath)
-
-            If fileIsReadonly Then
-                FileAccess.RemoveReadOnly(HostsFilePath)
-            End If
-
-            Backup(HostsFilePath)
-
-            Dim input As String = ""
-            Using sr As New StreamReader(HostsFilePath)
-                input = sr.ReadToEnd()
-            End Using
-
-            Dim output As String = RemoveOldEntries(ip, host, input)
-
-            output = output + vbNewLine + ip & " " & host
-
-            Using sw As New StreamWriter(HostsFilePath)
-                sw.Write(output)
-                sw.Close()
-            End Using
-
-            If fileIsReadonly Then
-                FileAccess.AddReadonly(HostsFilePath)
-            End If
-
-
-            If MetroMessageBox.Show(NHLGamesMetro.FormInstance, "Do you wish to view the Hosts file confim the changes?", "Open Hosts File", MessageBoxButtons.YesNo) = DialogResult.Yes Then
-                Process.Start(HostsFilePath)
-            End If
-
-        End If
-
-    End Sub
-
-    Public Shared Function EnsureAdmin() As Boolean
-
-        If IsAdministrator() = False Then
-
-            If MetroMessageBox.Show(NHLGamesMetro.FormInstance, "This application is missing the required hosts file entry. Do you want to restart this this application as an Administrator and add the required entry?", "Admin Access Required", MessageBoxButtons.YesNo) = DialogResult.Yes Then
-
-                'ApplicationSettings.SetValue(ApplicationSettings.Settings.InAdminModeToSetHostsEntry, True)
-                ' Restart program And run as admin
-                Dim exeName = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName
-                Dim startInfo As ProcessStartInfo = New ProcessStartInfo(exeName)
-                startInfo.Verb = "runas"
-                startInfo.UseShellExecute = True
-                Try
-                    System.Diagnostics.Process.Start(startInfo)
-                    Application.Exit()
-                Catch ex As Exception
-
-                End Try
-
-            End If
-            Return False
-        End If
-        Return True
-
-    End Function
-    Public Shared Function IsAdministrator() As Boolean
-        Dim identity As WindowsIdentity = WindowsIdentity.GetCurrent()
-        Dim principal As WindowsPrincipal = New WindowsPrincipal(identity)
-        Return principal.IsInRole(WindowsBuiltInRole.Administrator)
-    End Function
-
-
-
-End Class
+    End Class
+End Namespace

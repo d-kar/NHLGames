@@ -80,7 +80,7 @@ namespace NHLGames.AdDetection.Modules.OBS
             }
             catch
             {
-                Console.WriteLine($"Unable to load {m_fileName}. Using default config.");
+                Console.WriteLine($"OBS: Unable to load {m_fileName}. Using default config.");
             }
 
             Save(Default);
@@ -100,7 +100,7 @@ namespace NHLGames.AdDetection.Modules.OBS
             }
             catch
             {
-                Console.WriteLine($"Unable to save {m_fileName}");
+                Console.WriteLine($"OBS: Unable to save {m_fileName}");
             }
         }
     }

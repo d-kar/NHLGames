@@ -8,13 +8,13 @@ namespace NHLGames.AdDetection.AdDetectors
 {
     internal class ScreenAdDetectionEngine : AdDetectionEngineBase
     {
-        private readonly Bitmap m_inProgressImage;
+        private readonly Bitmap _inProgressImage;
 
-        private Screen m_screenPlayingAd;
+        private Screen _screenPlayingAd;
 
         public ScreenAdDetectionEngine()
         {
-            m_inProgressImage = Resources.CommercialBreakInProgress;
+            _inProgressImage = Resources.CommercialBreakInProgress;
         }
 
         protected override int PollPeriodMilliseconds => 500;
@@ -54,14 +54,14 @@ namespace NHLGames.AdDetection.AdDetectors
 
                 using (var currentScreen = CaptureScreen(screen))
                 {
-                    var difference = currentScreen.PercentageDifference(m_inProgressImage);
+                    var difference = currentScreen.PercentageDifference(_inProgressImage);
 
                     if (difference < 0.70)
                     {
-                        m_screenPlayingAd = screen;
+                        _screenPlayingAd = screen;
                         return true;
                     }
-                    m_screenPlayingAd = null;
+                    _screenPlayingAd = null;
                     return false;
                 }
             }
@@ -71,12 +71,12 @@ namespace NHLGames.AdDetection.AdDetectors
 
         private bool IsAdPlaying()
         {
-            return m_screenPlayingAd != null;
+            return _screenPlayingAd != null;
         }
 
         private bool IsAdPlaying(Screen screen)
         {
-            return IsAdPlaying() && m_screenPlayingAd.Equals(screen);
+            return IsAdPlaying() && _screenPlayingAd.Equals(screen);
         }
     }
 }

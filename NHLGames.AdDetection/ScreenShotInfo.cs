@@ -5,21 +5,21 @@ namespace NHLGames.AdDetection
 {
     public class ScreenShotInfo
     {
-        private const float m_streamRes = 16/(float) 9;
+        private const float StreamRes = 16/(float) 9;
 
 
         public ScreenShotInfo(Screen screen)
         {
             var screenRes = screen.Bounds.Size.Width/(float) screen.Bounds.Size.Height;
 
-            if (Math.Abs(screenRes - m_streamRes) < .001)
+            if (Math.Abs(screenRes - StreamRes) < .001)
             {
                 Width = screen.Bounds.Size.Width;
                 Height = screen.Bounds.Size.Height;
                 XOffSet = 0;
                 YOffSet = 0;
             }
-            else if (screenRes > m_streamRes)
+            else if (screenRes > StreamRes)
             {
                 //wider than 16:9 (Black bars on sides)
                 Height = screen.Bounds.Size.Height;
@@ -31,7 +31,7 @@ namespace NHLGames.AdDetection
                 Width = (int) width;
                 XOffSet = (screen.Bounds.Size.Width - Width)/2;
             }
-            else if (screenRes < m_streamRes)
+            else if (screenRes < StreamRes)
             {
                 //Taller than 16:9 (Black bars on top and bottom)
                 Width = screen.Bounds.Size.Width;

@@ -7,18 +7,18 @@ namespace NHLGames.AdDetection.AdDetectors
 {
     public class VolumeAdDetectionEngine : AdDetectionEngineBase
     {
-        private readonly Dictionary<int, DateTime> m_lastSoundTime = new Dictionary<int, DateTime>();
+        private readonly Dictionary<int, DateTime> _lastSoundTime = new Dictionary<int, DateTime>();
         protected override int PollPeriodMilliseconds => 100;
 
-        private int m_requiredSilenceMilliseconds => 500;
+        private int _requiredSilenceMilliseconds => 500;
 
         protected override bool IsAdCurrentlyPlaying()
         {
-            var closedProcesses = m_lastSoundTime.Keys.Where(x => !MediaPlayerProcesses.Contains(x)).ToList();
-            var newProcesses = MediaPlayerProcesses.Where(x => !m_lastSoundTime.Keys.Contains(x)).ToList();
+            var closedProcesses = _lastSoundTime.Keys.Where(x => !MediaPlayerProcesses.Contains(x)).ToList();
+            var newProcesses = MediaPlayerProcesses.Where(x => !_lastSoundTime.Keys.Contains(x)).ToList();
             foreach (var closedProcess in closedProcesses)
             {
-                m_lastSoundTime.Remove(closedProcess);
+                _lastSoundTime.Remove(closedProcess);
             }
 
 
@@ -37,7 +37,7 @@ namespace NHLGames.AdDetection.AdDetectors
             }
 
 
-            if (m_lastSoundTime.Values.All(x => DateTime.Now - x > TimeSpan.FromMilliseconds(m_requiredSilenceMilliseconds)))
+            if (_lastSoundTime.Values.All(x => DateTime.Now - x > TimeSpan.FromMilliseconds(_requiredSilenceMilliseconds)))
             {
                 return true;
             }
@@ -49,13 +49,13 @@ namespace NHLGames.AdDetection.AdDetectors
 
         private void AddOrUpdateLastSoundOccured(int processId)
         {
-            if (m_lastSoundTime.ContainsKey(processId))
+            if (_lastSoundTime.ContainsKey(processId))
             {
-                m_lastSoundTime[processId] = DateTime.Now;
+                _lastSoundTime[processId] = DateTime.Now;
             }
             else
             {
-                m_lastSoundTime.Add(processId, DateTime.MinValue);
+                _lastSoundTime.Add(processId, DateTime.MinValue);
             }
         }
 

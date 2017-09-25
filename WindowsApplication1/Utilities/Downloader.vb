@@ -2,130 +2,154 @@
 Imports System.IO
 Imports System.Net
 Imports System.Text
-Imports MetroFramework
+Imports System.Web.UI.WebControls.Expressions
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
+Imports NHLGames.My.Resources
 
+Namespace Utilities
 
-Public Class Downloader
+    Public Class Downloader
 
-    Private Shared GamesTxtURL = "http://107.6.175.181/static/ids.txt"
-    Private Shared ScheduleAPIURL = "http://statsapi.web.nhl.com/api/v1/schedule?startDate={0}&endDate={1}&expand=schedule.teams,schedule.game.content.media.epg"
-    Private Shared ApplicationVersionURL = " http://showtimes.ninja/static/version.txt"
-    Private Shared ChangelogURL As String = "http://showtimes.ninja/static/changelog.txt"
+        Private Const AppUrl As String = "https://showtimes.ninja/"
+        Private Const ApiUrl As String = "http://statsapi.web.nhl.com/api/v1/schedule"
+        Private Const ScheduleApiurl As String = ApiUrl & "?startDate={0}&endDate={1}&expand=schedule.teams,schedule.linescore,schedule.game.seriesSummary,schedule.game.content.media.epg"
+        Private Const AppVersionUrl As String = AppUrl & "static/version.txt"
+        Private Const AppChangelogUrl As String = AppUrl & "static/changelog.txt"
 
-    Private Shared ApplicationVersionFileName As String = "version.txt"
-    Private Shared GamesTextFileName As String = "games.txt"
-    Private Shared ChangelogFileName As String = "changelog.txt"
+        Private Const Backslash As Char = "\"
 
-    Private Shared LocalFileDirectory = ""
+        Private Shared _localFileDirectory As String = GetLocalFileDirectory()
 
-    Private Shared Function GetLocalFileDirectory() As String
-        If String.IsNullOrEmpty(LocalFileDirectory) Then
+        Private Shared Function GetLocalFileDirectory() As String
+            If true Then
+                Const dir As String = "NHLGames"
+                Const file As String = "test.txt"
 
-            Dim localAppDataPath As String = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
-            Dim exeStartupPath As String = Application.StartupPath
-            Dim tempPath As String = Path.GetTempPath()
+                Dim exeStartupPath As String = Application.StartupPath & Backslash 
+                Dim localAppDataPath As String = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) & Backslash 
+                Dim tempPath As String = Path.GetTempPath()
 
-            If FileAccess.HasAccess(localAppDataPath) Then
-                LocalFileDirectory = localAppDataPath
-            ElseIf FileAccess.HasAccess(exeStartupPath)
-                Console.WriteLine("Error: Unable to write to path: " & localAppDataPath)
-                LocalFileDirectory = exeStartupPath
-            ElseIf FileAccess.HasAccess(tempPath)
-                Console.WriteLine("Error: Unable to write to path: " & exeStartupPath)
-                LocalFileDirectory = tempPath
+                If FileAccess.HasAccess(localAppDataPath & file) Then
+                    _localFileDirectory = localAppDataPath
+                ElseIf FileAccess.HasAccess(tempPath) Then
+                    _localFileDirectory = tempPath
+                Else
+                    _localFileDirectory = exeStartupPath
+                End If
+
+                If Not Directory.Exists(_localFileDirectory & dir & Backslash) Then
+                    MkDir(_localFileDirectory & dir & Backslash)
+                End If
+
+                _localFileDirectory = _localFileDirectory & dir & Backslash
             End If
-        End If
 
-        Return LocalFileDirectory
+            Return _localFileDirectory
 
-    End Function
+        End Function
 
-    Private Shared Function DownloadContents(URL As String) As String
-        Dim client As New WebClient
-        client.Encoding = Encoding.UTF8 'Support french chars. I'm looking at you Montreal
-        Return client.DownloadString(URL)
-    End Function
-    Private Shared Sub DownloadFile(URL As String, fileName As String, Optional checkIfExists As Boolean = False, Optional overwrite As Boolean = True)
-        Dim fullPath As String = Path.Combine(GetLocalFileDirectory(), fileName)
+        Private Shared Function DownloadContents(server As String, url As String) As String
+            Dim client As New WebClient
+            Dim content As String = String.Empty
+            client.Encoding = Encoding.UTF8
+            Try
+                content = client.DownloadString(url).Trim().ToString()
+            Catch ex As Exception
+                If Not server = AppUrl Then
+                    Console.WriteLine(English.msgServerSeemsDown, server)
+                End If
+            End Try
+            Return content
+        End Function
 
+        Private Shared Function DownloadJsonFile(server As String, url As String, fileName As String) As Boolean
+            Dim client As New WebClient
+            Dim filePath As String = Path.Combine(_localFileDirectory, fileName)
+            client.Encoding = Encoding.UTF8
+            Try
+                client.DownloadFile(url, filePath)
+            Catch ex As Exception
+                Console.WriteLine(English.msgServerNoRespondTryingAgain, server)
+                Return False
+            End Try
+            Return True
+        End Function
 
-        If (checkIfExists = False) OrElse (checkIfExists AndAlso My.Computer.FileSystem.FileExists(fullPath) = False) Then
-            Console.WriteLine("Downloading File: " & URL & " to " & fullPath)
-            My.Computer.Network.DownloadFile(URL, fullPath, "", "", False, 10000, overwrite)
-        Else
-            Console.WriteLine("Status: File aready exists at " & fullPath)
+        Private Shared Function ReadFileContents(fileName As String) As String
+            Dim returnValue As String = ""
+            Dim filePath As String = Path.Combine(_localFileDirectory, fileName)
+            Try
+                Using streamReader As IO.StreamReader = New StreamReader(filePath)
+                    returnValue = streamReader.ReadToEnd()
+                End Using
+            Catch ex As Exception
+                Console.WriteLine(English.errorGeneral, ex.Message.ToString())
+            End Try
 
-        End If
-    End Sub
+            Return returnValue
+        End Function
 
-    Private Shared Function ReadFileContents(fileName As String) As String
-        Dim returnValue As String = ""
-        Dim filePath As String = Path.Combine(GetLocalFileDirectory(), fileName)
-        Try
-            Using streamReader As IO.StreamReader = New IO.StreamReader(filePath)
-                returnValue = streamReader.ReadToEnd()
-            End Using
-        Catch ex As Exception
-            Console.WriteLine("Error: " & ex.Message)
-        End Try
+        Public Shared Function DownloadApplicationVersion() As String
+            Dim appVers As String
+            appVers = DownloadContents(AppUrl, AppVersionUrl)
+            If appVers.Contains("<html>") Then
+                appVers = String.Empty
+            End If
+            Return appVers
+        End Function
 
-        Return returnValue
-    End Function
+        Public Shared Function DownloadChangelog() As String
+            Dim appChangelog As String
+            appChangelog = DownloadContents(AppUrl, AppChangelogUrl)
+            If appChangelog.Contains("<html>") Then
+                appChangelog = String.Empty
+            End If
+            Return appChangelog
+        End Function
 
-    Public Shared Function DownloadApplicationVersion() As String
+        Public Shared Function DownloadJsonSchedule(startDate As DateTime, Optional refreshing As Boolean = False) As JObject
+            Dim returnValue As JObject
+            Dim dateTimeString As String = startDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+            Dim fileName As String = dateTimeString & ".json"
+            Dim url As String = String.Format(ScheduleApiurl, dateTimeString, dateTimeString)
+            Dim data As String
+            Dim filePath As String = Path.Combine(_localFileDirectory, fileName)
+            Dim gettingTerm As String = If (refreshing, English.msgRefreshing, English.msgFetching)
 
-        Console.WriteLine("Checking: Application version")
+            If startDate.Date.ToShortDateString >= DateHelper.GetPacificTime.ToShortDateString Then
+                Console.WriteLine(English.msgGettingSchedule, gettingTerm, startDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))
+                data = DownloadContents(ApiUrl, url)
+            Else
+                If LookOldJsonFiles(fileName) And Not refreshing Then
+                    Console.WriteLine(English.msgFetchingSavedSchedule, startDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), filePath)
+                    data = ReadFileContents(fileName)
+                Else
+                    If DownloadJsonFile(ApiUrl, url, fileName) Then
+                        Console.WriteLine(English.msgDownloadingJsonFile, startDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), filePath)
+                        data = ReadFileContents(fileName)
+                    Else 
+                        Console.WriteLine(English.msgGettingSchedule, gettingTerm, startDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))
+                        data = DownloadContents(ApiUrl, url)
+                    End If
+                End If
+            End If
 
-        DownloadFile(ApplicationVersionURL, ApplicationVersionFileName)
-        Return ReadFileContents(ApplicationVersionFileName).Trim()
+            If data.Equals(String.Empty) Then Return New JObject()
+            Dim reader As New JsonTextReader(New StringReader(data))
+            reader.DateParseHandling = DateParseHandling.None
+            returnValue = If(reader Is Nothing, New JObject(), JObject.Load(reader))
 
-    End Function
+            Return returnValue
 
-    Public Shared Function DownloadChangelog() As String
-        DownloadFile(ChangelogURL, ChangelogFileName)
-        Return ReadFileContents(ChangelogFileName).Trim()
-    End Function
+        End Function
 
-    Public Shared Function DownloadAvailableGames() As HashSet(Of String)
+        Public Shared Function LookOldJsonFiles(filename As String) As Boolean
+            If File.Exists(_localFileDirectory & filename) Then
+                Return File.GetLastAccessTime(filename).AddDays(1) <= Now
+            End If
+            Return False
+        End Function
 
-        Console.WriteLine("Checking: Available games")
-        DownloadFile(GamesTxtURL, GamesTextFileName)
-        Return New HashSet(Of String)(ReadFileContents(GamesTextFileName).Split(New Char() {vbLf}))
-    End Function
-
-
-
-    Public Shared Function DownloadJSONSchedule(startDate As DateTime) As JObject
-
-        Console.WriteLine("Checking: Fetching game schedule for " & startDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))
-
-        Dim returnValue As New JObject
-
-        Dim IsTodaysSchedule = (startDate.Date.Ticks = DateHelper.GetPacificTime.Date.Ticks)
-        Dim dateTimeString As String = startDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
-        Dim fileName As String = dateTimeString & ".json"
-        Dim URL As String = String.Format(ScheduleAPIURL, dateTimeString, dateTimeString)
-
-        Dim data As String = ""
-
-        If IsTodaysSchedule Then
-            Console.WriteLine("Status: Downloading todays current schedule from " & URL)
-            data = DownloadContents(URL)
-        Else
-            DownloadFile(URL, fileName, False, True)
-            data = ReadFileContents(fileName)
-        End If
-
-        'returnValue = JObject.Parse(fileContent) 'Don't use above, so we can manually parse out datetime since there may be some issues there with different regions
-
-        Dim reader As New JsonTextReader(New StringReader(data))
-        reader.DateParseHandling = DateParseHandling.None
-        returnValue = JObject.Load(reader)
-
-        Return returnValue
-
-    End Function
-
-End Class
+    End Class
+End Namespace

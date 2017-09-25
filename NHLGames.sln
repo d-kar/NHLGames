@@ -1,15 +1,24 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "NHLGames", "WindowsApplication1\NHLGames.vbproj", "{0D71CCEF-DD58-43E3-8794-39203DD6999C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2C851FF7-C1CD-4561-8ECC-D69B937BA622} = {2C851FF7-C1CD-4561-8ECC-D69B937BA622}
+	EndProjectSection
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{80D42D09-D072-4617-9EC2-A09CE2BDC3CA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NHLGames.AdDetection.Common", "NHLGames.AdDetection.Common\NHLGames.AdDetection.Common.csproj", "{AE6EBFF7-4C75-4601-A839-861DCE1E22BC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NHLGames.AdDetection", "NHLGames.AdDetection\NHLGames.AdDetection.csproj", "{2C851FF7-C1CD-4561-8ECC-D69B937BA622}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3FD4D720-54E2-456A-802E-A52C151653B3} = {3FD4D720-54E2-456A-802E-A52C151653B3}
+		{B3E6426C-2EF0-41FB-BA26-93C140E716D3} = {B3E6426C-2EF0-41FB-BA26-93C140E716D3}
+		{D4309ED1-5D5C-4CF6-AB00-2C45D1D97BE9} = {D4309ED1-5D5C-4CF6-AB00-2C45D1D97BE9}
+		{AE6EBFF7-4C75-4601-A839-861DCE1E22BC} = {AE6EBFF7-4C75-4601-A839-861DCE1E22BC}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NHLGames.AdDetection.Modules.Spotify", "AdModules\NHLGames.AdDetection.Modules.Spotify\NHLGames.AdDetection.Modules.Spotify.csproj", "{B3E6426C-2EF0-41FB-BA26-93C140E716D3}"
 EndProject

@@ -11,44 +11,44 @@ namespace NHLGames.AdDetection.AdDetectors
     public abstract class AdDetectionEngineBase
     {
 
-        private List<int> m_mediaPlayerProcesses;
+        private List<int> _mediaPlayerProcesses;
 
-        private List<IAdModule> m_modules = new List<IAdModule>();
+        private readonly List<IAdModule> _modules = new List<IAdModule>();
 
         protected abstract int PollPeriodMilliseconds { get; }
 
-        private bool m_previousAdPlayingState;
+        private bool _previousAdPlayingState;
 
-        private bool m_firstAdCheck;
+        private bool _firstAdCheck;
 
-        protected ReadOnlyCollection<int> MediaPlayerProcesses => new ReadOnlyCollection<int>(m_mediaPlayerProcesses);
+        protected ReadOnlyCollection<int> MediaPlayerProcesses => new ReadOnlyCollection<int>(_mediaPlayerProcesses);
 
         internal Task AddModule(IAdModule module)
         {
-            lock (m_modules)
+            lock (_modules)
             {
-                m_modules.Add(module);
+                _modules.Add(module);
                 return Task.Run(() => module.Initialize());
             }
         }
 
         internal void RemoveModule(string moduleName)
         {
-            lock (m_modules)
+            lock (_modules)
             {
-                var toRemove = m_modules.Where(x => x.Title == moduleName);
+                var toRemove = _modules.Where(x => x.Title == moduleName);
 
                 foreach (var adModule in toRemove)
                 {
-                    m_modules.Remove(adModule);
+                    _modules.Remove(adModule);
                 }
             }
         }
 
         internal void Start(List<IAdModule> modules)
         {
-            m_previousAdPlayingState = false;
-            m_firstAdCheck = true;
+            _previousAdPlayingState = false;
+            _firstAdCheck = true;
 
             var initializationTasks = modules.Select(AddModule).ToList();
 
@@ -63,7 +63,7 @@ namespace NHLGames.AdDetection.AdDetectors
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Problem initializing tasks: {e.Message}");
+                Console.WriteLine($@"Problem initializing tasks: {e.Message}");
             }
 
             while (true)
@@ -78,16 +78,16 @@ namespace NHLGames.AdDetection.AdDetectors
 
                     var newAdPlayingState = IsAdCurrentlyPlaying();
 
-                    if (m_firstAdCheck || newAdPlayingState != m_previousAdPlayingState)
+                    if (_firstAdCheck || newAdPlayingState != _previousAdPlayingState)
                     {
-                        m_firstAdCheck = false;
-                        m_previousAdPlayingState = newAdPlayingState;
+                        _firstAdCheck = false;
+                        _previousAdPlayingState = newAdPlayingState;
                         NotifyModules();
                     }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Unexpected Exception: {e.Message}");
+                    Console.WriteLine($@"Unexpected Exception: {e.Message}");
                 }
 
                 await Task.Delay(PollPeriodMilliseconds);
@@ -107,28 +107,31 @@ namespace NHLGames.AdDetection.AdDetectors
             var mpc32Processes =
                 Process.GetProcessesByName("MPC-HC").Where(x => x.MainWindowTitle == @"stdin" || x.MainWindowTitle.ToLower().Contains(" @ ")).Select(x => x.Id);
 
+            var mpvProcesses =
+                Process.GetProcessesByName("mpv").Select(x => x.Id);
+
             //Add mpv support here
 
-            m_mediaPlayerProcesses = vlcProcesses.Concat(mpc64Processes).Concat(mpc32Processes).ToList();
+            _mediaPlayerProcesses = vlcProcesses.Concat(mpc64Processes).Concat(mpc32Processes).Concat(mpvProcesses).ToList();
 
 
-            return m_mediaPlayerProcesses.Count != 0;
+            return _mediaPlayerProcesses.Count != 0;
         }
 
         private void NotifyModules()
         {
-            lock (m_modules)
+            lock (_modules)
             {
-                foreach (var module in m_modules)
+                foreach (var module in _modules)
                 {
-                    if (m_previousAdPlayingState)
+                    if (_previousAdPlayingState)
                     {
-                        Console.WriteLine("Ad Detection: Calling AdStarted on modules.");
+                        Console.WriteLine(@"Ad Detection: Calling AdStarted on modules.");
                         Task.Run(() => module.AdStarted());
                     }
                     else
                     {
-                        Console.WriteLine("Ad Detection: Calling AdEnded on modules.");
+                        Console.WriteLine(@"Ad Detection: Calling AdEnded on modules.");
                         Task.Run(() => module.AdEnded());
                     }
                 }
